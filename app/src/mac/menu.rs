@@ -30,18 +30,26 @@ fn controller_class() -> &'static Class {
     extern "C" fn toggle(_this: &Object, _cmd: Sel, _sender: Id) {
         super::toggle();
     }
+    extern "C" fn toggle_login(_this: &Object, _cmd: Sel, sender: Id) {
+        let on = super::login::set_enabled(!super::login::is_enabled());
+        unsafe {
+            let _: () = msg_send![sender, setState: on as isize];
+        }
+    }
     let mut decl = ClassDecl::new("VnKeyController", class!(NSObject)).expect("class đã tồn tại");
     unsafe {
         decl.add_method(sel!(toggle:), toggle as extern "C" fn(&Object, Sel, Id));
+        decl.add_method(sel!(toggleLogin:), toggle_login as extern "C" fn(&Object, Sel, Id));
     }
     decl.register()
 }
 
-unsafe fn add_item(menu: Id, title: &str, action: Sel, target: Id, key: &str) {
+unsafe fn add_item(menu: Id, title: &str, action: Sel, target: Id, key: &str) -> Id {
     let item: Id = msg_send![class!(NSMenuItem), alloc];
     let item: Id = msg_send![item, initWithTitle: nsstring(title) action: action keyEquivalent: nsstring(key)];
     let _: () = msg_send![item, setTarget: target];
     let _: () = msg_send![menu, addItem: item];
+    item
 }
 
 pub fn run(tap_ok: bool) -> ! {
@@ -64,6 +72,10 @@ pub fn run(tap_ok: bool) -> ! {
             add_item(menu, "Cần quyền Accessibility — cấp quyền rồi mở lại", sel!(vnkeyNoop:), null_mut(), "");
         }
         add_item(menu, "Bật/tắt tiếng Việt  (Ctrl+Shift)", sel!(toggle:), controller, "");
+        if super::login::supported() {
+            let item = add_item(menu, "Khởi động cùng máy", sel!(toggleLogin:), controller, "");
+            let _: () = msg_send![item, setState: super::login::is_enabled() as isize];
+        }
         let sep: Id = msg_send![class!(NSMenuItem), separatorItem];
         let _: () = msg_send![menu, addItem: sep];
         add_item(menu, "Thoát VnKey", sel!(terminate:), app, "q");

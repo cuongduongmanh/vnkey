@@ -120,7 +120,7 @@ unsafe fn on_key_down(proxy: CGEventTapProxy, event: CGEventRef) -> CGEventRef {
         match s.engine.process(ch) {
             Action::PassThrough => event,
             Action::Replace { backspaces, text } => {
-                send(proxy, s.source, backspaces, &text);
+                send(proxy, s.source, keycode, backspaces, &text);
                 null_mut() // nuốt phím gốc
             }
         }
@@ -158,14 +158,23 @@ unsafe fn event_char(event: CGEventRef) -> Option<char> {
     char::from_u32(buf[0] as u32)
 }
 
-unsafe fn send(proxy: CGEventTapProxy, source: CGEventSourceRef, backspaces: usize, text: &str) {
-    for _ in 0..backspaces {
+/// `keycode`: mã phím vật lý vừa bị nuốt (f, s, w...). Chữ thay thế được gửi kèm mã phím này
+/// thay vì 0: mã 0 là phím `a`, nếu ngón tay còn đang giữ `a` (gõ nhanh: `laf`, `quar`, `lawms`)
+/// thì app thấy thêm một lần nhấn/nhả `a`, lệch trạng thái phím và xoá thừa một chữ (là -> à).
+unsafe fn send(proxy: CGEventTapProxy, source: CGEventSourceRef, keycode: u16, backspaces: usize, text: &str) {
+    // Giống "Fix recommend browser" của OpenKey: gõ trước một ký tự trống (U+202F) rồi xoá
+    // thêm 1 lần. Ký tự này "hứng" gợi ý autocomplete/predictive text mà app đang giữ,
+    // để Backspace không xoá nhầm chữ phía trước khi gõ nhanh (lắm -> ắm).
+    post_key(proxy, source, keycode, Some(&[0x202F]));
+    for _ in 0..backspaces + 1 {
         post_key(proxy, source, KEY_DELETE, None);
     }
-    for ch in text.chars() {
-        let mut buf = [0u16; 2];
-        let units = ch.encode_utf16(&mut buf);
-        post_key(proxy, source, 0, Some(units));
+    // Gửi cả chuỗi trong một sự kiện (như OpenKey) thay vì từng ký tự: ít sự kiện hơn,
+    // app Chromium/Electron không bị lệch thứ tự khi gõ nhanh (mất/thừa chữ).
+    // macOS giới hạn khoảng 20 UTF-16 unit cho mỗi sự kiện.
+    let units: Vec<u16> = text.encode_utf16().collect();
+    for chunk in units.chunks(20) {
+        post_key(proxy, source, keycode, Some(chunk));
     }
 }
 

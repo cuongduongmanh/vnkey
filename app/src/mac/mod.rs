@@ -1,4 +1,5 @@
 mod ffi;
+mod login;
 mod menu;
 mod tap;
 
