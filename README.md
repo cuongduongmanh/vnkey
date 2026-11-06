@@ -7,6 +7,8 @@ Bộ gõ tiếng Việt siêu nhẹ cho macOS, viết bằng Rust. Chỉ có **T
 - Gõ không gạch chân, dùng CGEventTap + Backspace (cùng cách với OpenKey, EVKey, GõKey)
 - Tự trả lại nguyên văn khi gõ từ không phải tiếng Việt (`what`, `windows`...)
 - Gõ lặp để huỷ: `ass` → `as`, `aaa` → `aa`, `ww` → `w`
+- Tự thêm móc cho "ươ": `dduwocj` → `được`, `huwongs` → `hướng`
+- Tự khởi động cùng máy: bật trong menu (macOS 13+)
 
 ## Cấu trúc
 
@@ -28,7 +30,7 @@ Build app (trên macOS):
 
 ```bash
 ./bundle/build-app.sh    # -> target/VnKey.app
-./bundle/build-dmg.sh    # -> target/VnKey-0.1.0.dmg (kéo vào Applications)
+./bundle/build-dmg.sh    # -> target/VnKey-1.0.0.dmg (kéo vào Applications)
 ```
 
 Lần đầu chạy script trên Mac: `chmod +x bundle/*.sh`.
@@ -48,4 +50,3 @@ Lần chạy đầu, macOS sẽ hỏi quyền **Accessibility**. Vào System Set
 - Thanh địa chỉ Chrome/Safari có autocomplete đôi khi nuốt Backspace. OpenKey xử lý bằng cách gửi Shift+← để chọn chữ rồi gõ đè.
 - Reset từ khi đổi ứng dụng (lắng nghe `NSWorkspaceDidActivateApplicationNotification`).
 - Danh sách app loại trừ (Terminal, game...).
-- Tự khởi động cùng máy (`SMAppService`).
