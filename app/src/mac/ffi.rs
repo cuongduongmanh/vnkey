@@ -115,3 +115,7 @@ pub unsafe fn ax_trusted_prompt() -> bool {
     }
     trusted
 }
+
+// NSApplication/NSStatusBar... nằm trong AppKit; objc không tự link framework này.
+#[link(name = "AppKit", kind = "framework")]
+extern "C" {}
