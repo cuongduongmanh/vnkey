@@ -1,0 +1,11 @@
+[package]
+name = "vnkey"
+version = "0.1.0"
+edition = "2021"
+description = "Bộ gõ tiếng Việt Telex cho macOS (menu bar + CGEventTap)"
+
+[dependencies]
+vnkey-engine = { path = "../engine" }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc = "0.2.7"

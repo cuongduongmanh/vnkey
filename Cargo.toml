@@ -1,0 +1,11 @@
+[workspace]
+members = ["engine", "app"]
+resolver = "2"
+
+# Tối ưu kích thước binary
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

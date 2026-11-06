@@ -1,0 +1,7 @@
+[package]
+name = "vnkey-engine"
+version = "0.1.0"
+edition = "2021"
+description = "Bộ xử lý Telex -> Unicode dựng sẵn, không phụ thuộc hệ điều hành"
+
+[dependencies]
