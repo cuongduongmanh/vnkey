@@ -162,10 +162,12 @@ unsafe fn send(proxy: CGEventTapProxy, source: CGEventSourceRef, backspaces: usi
     for _ in 0..backspaces {
         post_key(proxy, source, KEY_DELETE, None);
     }
-    for ch in text.chars() {
-        let mut buf = [0u16; 2];
-        let units = ch.encode_utf16(&mut buf);
-        post_key(proxy, source, 0, Some(units));
+    // Gửi cả chuỗi trong một sự kiện (như OpenKey) thay vì từng ký tự: ít sự kiện hơn,
+    // app Chromium/Electron không bị lệch thứ tự khi gõ nhanh (mất/thừa chữ).
+    // macOS giới hạn khoảng 20 UTF-16 unit cho mỗi sự kiện.
+    let units: Vec<u16> = text.encode_utf16().collect();
+    for chunk in units.chunks(20) {
+        post_key(proxy, source, 0, Some(chunk));
     }
 }
 
