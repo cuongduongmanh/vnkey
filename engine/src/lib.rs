@@ -158,6 +158,9 @@ impl Engine {
         if !consumed {
             self.letters.push(Letter::plain(ch));
         }
+        if !self.raw {
+            self.complete_uo();
+        }
         if !self.raw && !self.is_valid() && self.is_transformed() {
             self.restore();
         }
@@ -306,6 +309,21 @@ impl Engine {
             self.letters[0].mark = Mark::Stroke;
         }
         true
+    }
+
+    /// "ưo" + chữ phía sau -> "ươ" (như Unikey): được, hướng, hươu.
+    fn complete_uo(&mut self) {
+        let Some((s, e)) = self.vowel_range() else { return };
+        for i in s..e.saturating_sub(1) {
+            if self.letters[i].base == 'u'
+                && self.letters[i].mark == Mark::Horn
+                && self.letters[i + 1].base == 'o'
+                && self.letters[i + 1].mark == Mark::None
+                && i + 2 < self.letters.len()
+            {
+                self.letters[i + 1].mark = Mark::Horn;
+            }
+        }
     }
 
     // ---------------------------------------------------------------- phân tích từ
@@ -478,6 +496,11 @@ mod tests {
             ("vieejt nam", "việt nam"),
             ("tieengs", "tiếng"),
             ("nguoiwf", "người"),
+            ("dduwocj", "được"),
+            ("huwongs", "hướng"),
+            ("huwou", "hươu"),
+            ("thuwowngf", "thường"),
+            ("lawms", "lắm"),
             ("dduwowcj", "được"),
             ("duwowngf", "dường"),
             ("ddoongf", "đồng"),
@@ -566,3 +589,4 @@ mod tests {
         assert_eq!(e.process('t'), Action::PassThrough);
     }
 }
+

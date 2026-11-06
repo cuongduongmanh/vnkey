@@ -159,8 +159,13 @@ unsafe fn event_char(event: CGEventRef) -> Option<char> {
 }
 
 unsafe fn send(proxy: CGEventTapProxy, source: CGEventSourceRef, backspaces: usize, text: &str) {
+    // Nghỉ rất ngắn giữa các sự kiện: app Chromium/Electron xử lý Backspace và chèn chữ
+    // không đồng bộ, gửi dồn dập thì Backspace có thể xoá nhầm chữ trước (lắm -> ắm).
+    // Phím thật tiếp theo chỉ được xử lý sau khi callback này trả về, nên không bị chen ngang.
+    const GAP: std::time::Duration = std::time::Duration::from_micros(1500);
     for _ in 0..backspaces {
         post_key(proxy, source, KEY_DELETE, None);
+        std::thread::sleep(GAP);
     }
     // Gửi cả chuỗi trong một sự kiện (như OpenKey) thay vì từng ký tự: ít sự kiện hơn,
     // app Chromium/Electron không bị lệch thứ tự khi gõ nhanh (mất/thừa chữ).
